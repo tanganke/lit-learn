@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lit-learn"
+version = "0.1.0"
+description = "A toolkit for multi-task and multi-objective optimization."
+authors = [{ name = "Anke Tang", email = "tang.anke@foxmail.com" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = [
+    "optimization",
+    "multi-task",
+    "multi-objective",
+    "machine learning",
+    "deep learning",
+]
+requires-python = ">=3.10"
+dependencies = ["numpy", "torch"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+docs = ["sphinx>=4.0", "sphinx-rtd-theme", "numpydoc"]
+
+[tool.setuptools.packages.find]
+where = ["lit_learn"]
+
+[tool.isort]
+profile = "black"
