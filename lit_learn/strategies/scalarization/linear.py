@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 import torch.nn as nn
 
-from lit_learn.core.objectives import BaseObjective, ObjectiveDict, ObjectiveList
+from lit_learn.core.objective import BaseObjective, ObjectiveDict, ObjectiveList
 from lit_learn.objectives import WeightedSumObjective
 
 
