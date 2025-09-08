@@ -34,9 +34,10 @@ dev = [
     "flake8",
     "mypy",
     "sphinx",
-    "sphinx-rtd-theme",
+    "furo",
+    "myst-parser",
 ]
-docs = ["sphinx>=4.0", "sphinx-rtd-theme", "numpydoc"]
+docs = ["sphinx>=4.0", "furo", "myst-parser", "numpydoc"]
 
 [tool.setuptools]
 include-package-data = true
