@@ -1,47 +1,87 @@
 # lit-learn: A Toolkit for Multi-Task and Multi-Objective Optimization
 
-lit-learn is a Python toolkit designed for multi-task and multi-objective optimization. It provides a flexible and efficient framework for researchers and practitioners to tackle complex optimization problems across various domains.
+lit-learn is a Python toolkit designed for multi-task and multi-objective optimization built on **PyTorch Lightning** and **Lightning Fabric**. It provides a flexible and efficient framework for researchers and practitioners to tackle complex optimization problems across various domains.
 
-## Features
+## 🏗️ Architecture
 
-- **Multi-Task Optimization**: Implement strategies to optimize multiple tasks simultaneously.
-- **Multi-Objective Optimization**: Solve problems with multiple objectives, providing a set of optimal solutions.
-- **Extensible Architecture**: Easily extend the toolkit with custom algorithms and objectives.
-- **Utility Functions**: Includes helper functions for data normalization and result visualization.
+lit-learn follows a **layered architecture** with **strategy pattern** for algorithms:
 
-## Installation
-
-To install lit-learn, clone the repository and install the required dependencies:
-
-```bash
-git clone https://github.com/yourusername/lit-learn.git
-cd lit-learn
-pip install -r requirements.txt
+```
+┌─────────────────────────────────────┐
+│           User Interface            │  ← Examples, Notebooks
+├─────────────────────────────────────┤
+│          Trainer Adapters           │  ← Lightning/Fabric Adapters  
+├─────────────────────────────────────┤
+│            Algorithms               │  ← Multi-task/Multi-objective
+├─────────────────────────────────────┤
+│         Strategy Layer              │  ← Optimization Strategies
+├─────────────────────────────────────┤
+│            Core Layer               │  ← Base Classes, Objectives
+└─────────────────────────────────────┘
 ```
 
-## Usage
+## 📦 Installation
 
-### Basic Usage
+```bash
+git clone https://github.com/tanganke/lit-learn.git
+cd lit-learn
+pip install -e .
+```
 
-To get started with the basic functionality of lit-learn, you can refer to the `examples/basic_usage.py` file. This example demonstrates how to set up an optimizer and define objectives.
 
-### Advanced Optimization
 
-For more complex scenarios, check out the `examples/advanced_optimization.py` file, which showcases advanced usage of the toolkit.
+## 📚 Documentation
 
-## Documentation
-
-Comprehensive documentation is available in the `docs` directory. You can build the documentation using Sphinx:
+Comprehensive documentation is available:
 
 ```bash
 cd docs
 make html
 ```
 
-## Contributing
+## 🛠️ Extending lit-learn
 
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+### Adding Custom Algorithms
 
-## License
+```python
+from lit_learn.algorithms import BaseAlgorithm
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+class MyCustomAlgorithm(BaseAlgorithm):
+    def _get_default_params(self):
+        return {"custom_param": 1.0}
+    
+    def _compute_algorithm_loss(self, batch, stage):
+        # Your custom loss computation
+        return {"total_loss": loss}
+```
+
+### Adding Custom Objectives
+
+```python
+from lit_learn.core.objectives import BaseObjective
+
+class MyCustomObjective(BaseObjective):
+    def compute(self, predictions, targets):
+        # Your custom objective computation
+        return custom_loss
+```
+
+## 🎯 Roadmap
+
+- [ ] Core architecture with Lightning/Fabric support
+- [ ] Multi-task learning algorithms
+- [ ] Multi-objective optimization methods
+- [ ] Advanced Pareto optimization (NSGA-II, MOGA)
+- [ ] Bayesian optimization integration
+- [ ] AutoML for hyperparameter tuning
+- [ ] More pre-built algorithms
+- [ ] Integration with popular datasets
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
