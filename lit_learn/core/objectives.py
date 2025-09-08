@@ -4,7 +4,7 @@ Objective functions for multi-task and multi-objective optimization.
 
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Set, Union
+from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Set, Union
 
 import torch
 import torch.nn as nn
@@ -127,6 +127,11 @@ class ObjectiveDict(nn.ModuleDict):
         Args:
             objectives: Dictionary mapping task names to BaseObjective instances
         """
+        for name, obj in (objectives or {}).items():
+            if not isinstance(obj, BaseObjective):
+                raise ValueError(
+                    f"Objective for task '{name}' must be an instance of BaseObjective"
+                )
         super().__init__(objectives)
 
     def forward(
@@ -220,13 +225,18 @@ class ObjectiveList(nn.ModuleList):
         >>> mse_value = objectives[0](predictions, targets)
     """
 
-    def __init__(self, objectives: Optional[List[BaseObjective]] = None):
+    def __init__(self, objectives: Optional[Iterable[BaseObjective]] = None):
         """
         Initialize ObjectiveList.
 
         Args:
             objectives: List of BaseObjective instances
         """
+        for obj in objectives or []:
+            if not isinstance(obj, BaseObjective):
+                raise ValueError(
+                    "All elements of objectives must be instances of BaseObjective"
+                )
         super().__init__(objectives)
 
     def forward(

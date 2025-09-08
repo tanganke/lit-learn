@@ -2,15 +2,12 @@
 Multi-objective specific objectives for scalarization and combination.
 """
 
-from typing import Any, List, Union
+from typing import Any, Iterable, List, Mapping, Union
 
 import torch
 import torch.nn as nn
 
-from lit_learn.core.objectives import (
-    BaseObjective,
-    ObjectiveList,
-)
+from lit_learn.core.objectives import BaseObjective, ObjectiveDict, ObjectiveList
 
 
 class WeightedSumObjective(BaseObjective):
@@ -22,7 +19,7 @@ class WeightedSumObjective(BaseObjective):
 
     def __init__(
         self,
-        objectives: ObjectiveList,
+        objectives: Union[ObjectiveList, ObjectiveDict],
         requires_grad: bool = True,
         device=None,
         dtype=None,
@@ -40,6 +37,23 @@ class WeightedSumObjective(BaseObjective):
             is_differentiable=objectives.is_differentiable,
         )
 
+        if isinstance(objectives, ObjectiveDict):
+            self.objective_names = list(objectives.keys())
+            self.objectives = ObjectiveList(objectives.values())
+        elif isinstance(objectives, Mapping):
+            self.objective_names = list(objectives.keys())
+            self.objectives = ObjectiveList(objectives.values())
+        elif isinstance(objectives, ObjectiveList):
+            self.objective_names = [f"objective_{i}" for i in range(len(objectives))]
+            self.objectives = objectives
+        elif isinstance(objectives, Iterable):
+            self.objective_names = [f"objective_{i}" for i in range(len(objectives))]
+            self.objectives = ObjectiveList(objectives)
+        else:
+            raise ValueError(
+                "objectives must be an ObjectiveList, ObjectiveDict, or iterable of BaseObjective"
+            )
+
         self.num_objectives = len(self.objectives)
         assert self.num_objectives > 0, "At least one objective is required"
 
@@ -49,6 +63,12 @@ class WeightedSumObjective(BaseObjective):
             requires_grad=requires_grad,
         )
         self.reset_parameters()
+
+    def to_objective_dict(self) -> ObjectiveDict:
+        """Convert to ObjectiveDict with objective names as keys."""
+        return ObjectiveDict(
+            {name: obj for name, obj in zip(self.objective_names, self.objectives)}
+        )
 
     def reset_parameters(self) -> None:
         """Reset weights to uniform distribution."""
