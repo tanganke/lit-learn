@@ -6,7 +6,7 @@ from typing import Any
 
 import torch
 
-from lit_learn.core.objectives import BaseObjective
+from lit_learn.core.objective import BaseObjective
 
 
 class MulticlassAccuracy(BaseObjective):

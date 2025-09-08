@@ -7,7 +7,7 @@ from typing import Any, Iterable, List, Mapping, Union
 import torch
 import torch.nn as nn
 
-from lit_learn.core.objectives import BaseObjective, ObjectiveDict, ObjectiveList
+from lit_learn.core.objective import BaseObjective, ObjectiveDict, ObjectiveList
 
 
 class WeightedSumObjective(BaseObjective):

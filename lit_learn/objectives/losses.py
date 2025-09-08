@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lit_learn.core.objectives import BaseObjective
+from lit_learn.core.objective import BaseObjective
 
 
 class LossAdapter(BaseObjective):

@@ -2,7 +2,7 @@
 Core components for lit-learn multi-task and multi-objective optimization.
 """
 
-from .objectives import (
+from .objective import (
     BaseObjective,
     ObjectiveDict,
     ObjectiveList,

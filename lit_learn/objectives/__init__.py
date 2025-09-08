@@ -2,7 +2,7 @@
 Objective functions for optimization.
 """
 
-from lit_learn.core.objectives import (
+from lit_learn.core.objective import (
     BaseObjective,
     ObjectiveDict,
     ObjectiveList,
