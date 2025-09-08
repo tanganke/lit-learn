@@ -3,10 +3,20 @@ Objective functions for multi-task and multi-objective optimization.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Union
+from enum import StrEnum
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Set, Union
 
 import torch
 import torch.nn as nn
+
+_ObjectiveOutput = Union[torch.Tensor, float]
+
+
+class OptimizationDirection(StrEnum):
+    MINIMIZE = "minimize"
+    MAXIMIZE = "maximize"
+    MIXED = "mixed"  # For multi-objective with both min and max objectives
+    UNDEFINED = "undefined"  # For objectives where direction is not defined
 
 
 class BaseObjective(nn.Module, ABC):
@@ -23,18 +33,22 @@ class BaseObjective(nn.Module, ABC):
     """
 
     # Class-level attributes that can be overridden by subclasses
-    minimize: bool = True  # Most ML objectives are minimized (loss functions)
-    is_differentiable: bool = True  # Most objectives are differentiable
+    optimization_direction: OptimizationDirection = OptimizationDirection.UNDEFINED
+    is_differentiable: bool = False  # Most objectives are differentiable
 
     def __init__(
         self,
-        minimize: bool = None,
+        optimization_direction: OptimizationDirection = None,
         is_differentiable: bool = None,
     ):
         super().__init__()
 
         # Instance attributes override class attributes
-        self.minimize = minimize if minimize is not None else self.__class__.minimize
+        self.optimization_direction = (
+            optimization_direction
+            if optimization_direction is not None
+            else self.__class__.optimization_direction
+        )
         self.is_differentiable = (
             is_differentiable
             if is_differentiable is not None
@@ -42,7 +56,7 @@ class BaseObjective(nn.Module, ABC):
         )
 
     @abstractmethod
-    def forward(self, predictions: Any, targets: Any) -> Union[torch.Tensor, float]:
+    def forward(self, predictions: Any, targets: Any) -> _ObjectiveOutput:
         """
         Compute the objective value.
 
@@ -56,10 +70,31 @@ class BaseObjective(nn.Module, ABC):
         """
         pass
 
-    @property
-    def optimization_direction(self) -> str:
-        """Get optimization direction as string."""
-        return "minimize" if self.minimize else "maximize"
+
+def _get_overall_optimization_direction(
+    directions: Set[OptimizationDirection],
+) -> OptimizationDirection:
+    """Determine the overall optimization direction for a set of directions.
+
+    Args:
+        directions: Set of OptimizationDirection values
+
+    Returns:
+        Overall optimization direction (MINIMIZE, MAXIMIZE, MIXED, UNDEFINED)
+    """
+    if not directions:
+        return OptimizationDirection.UNDEFINED
+
+    if len(directions) == 1:
+        return directions.pop()
+
+    if directions == {
+        OptimizationDirection.MINIMIZE,
+        OptimizationDirection.MAXIMIZE,
+    }:
+        return OptimizationDirection.MIXED
+
+    return OptimizationDirection.UNDEFINED
 
 
 class ObjectiveDict(nn.ModuleDict):
@@ -96,10 +131,10 @@ class ObjectiveDict(nn.ModuleDict):
 
     def forward(
         self,
-        predictions: Dict[str, Any],
-        targets: Dict[str, Any],
+        predictions: Mapping[str, Any],
+        targets: Mapping[str, Any],
         task_subset: Optional[List[str]] = None,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> Dict[str, _ObjectiveOutput]:
         """
         Compute objectives for all or a subset of tasks.
 
@@ -135,14 +170,132 @@ class ObjectiveDict(nn.ModuleDict):
         """Iterator over (task_name, objective) pairs."""
         return super().items()
 
-    def get_optimization_directions(self) -> Dict[str, str]:
+    def values(self) -> Iterator[BaseObjective]:
+        """Iterator over objectives."""
+        return super().values()
+
+    def get_optimization_directions(self) -> Dict[str, OptimizationDirection]:
         """Get optimization direction for each objective."""
         return {name: obj.optimization_direction for name, obj in self.items()}
 
-    def get_differentiable_tasks(self) -> List[str]:
-        """Get list of task names that have differentiable objectives."""
-        return [name for name, obj in self.items() if obj.is_differentiable]
+    def get_differentiable_objectives(self) -> Mapping[str, BaseObjective]:
+        """Get mapping of task names to differentiable objectives."""
+        return {name: obj for name, obj in self.items() if obj.is_differentiable}
 
-    def get_non_differentiable_tasks(self) -> List[str]:
-        """Get list of task names that have non-differentiable objectives."""
-        return [name for name, obj in self.items() if not obj.is_differentiable]
+    def get_non_differentiable_objectives(self) -> Mapping[str, BaseObjective]:
+        """Get mapping of task names to non-differentiable objectives."""
+        return {name: obj for name, obj in self.items() if not obj.is_differentiable}
+
+    @property
+    def is_differentiable(self) -> bool:
+        """Whether all objectives are differentiable."""
+        return all(obj.is_differentiable for obj in self.values())
+
+    @property
+    def optimization_direction(self) -> OptimizationDirection:
+        return _get_overall_optimization_direction(
+            {obj.optimization_direction for obj in self.values()}
+        )
+
+
+class ObjectiveList(nn.ModuleList):
+    """
+    A list of objectives for multi-objective optimization.
+
+    Similar to nn.ModuleList but specifically designed for BaseObjective instances.
+    Provides convenient methods for multi-objective computation where objectives
+    don't have specific task names but are treated as a vector of objectives.
+
+    Example:
+        >>> objectives = ObjectiveList([
+        ...     mse_loss(),
+        ...     mae_loss(),
+        ...     huber_loss()
+        ... ])
+        >>>
+        >>> # Compute all objectives
+        >>> losses = objectives(predictions, targets)  # Returns list of objective values
+        >>>
+        >>> # Access individual objectives
+        >>> mse_value = objectives[0](predictions, targets)
+    """
+
+    def __init__(self, objectives: Optional[List[BaseObjective]] = None):
+        """
+        Initialize ObjectiveList.
+
+        Args:
+            objectives: List of BaseObjective instances
+        """
+        super().__init__(objectives)
+
+    def forward(
+        self,
+        predictions: Iterator[Any],
+        targets: Iterator[Any],
+        task_subset: Optional[List[int]] = None,
+    ) -> List[_ObjectiveOutput]:
+        """
+        Compute objectives for all or a subset of objectives.
+
+        Args:
+            predictions: Model predictions (same format for all objectives)
+            targets: Target values (same format for all objectives)
+            objective_indices: Optional list of indices to compute. If None, compute all.
+
+        Returns:
+            List of computed objective values in the same order as objectives
+
+        Raises:
+            IndexError: If an index in objective_indices is out of range
+        """
+        results = []
+        indices_to_compute = (
+            task_subset if task_subset is not None else range(len(self))
+        )
+
+        # Validate indices
+        for idx in indices_to_compute:
+            if idx >= len(self) or idx < -len(self):
+                raise IndexError(
+                    f"Objective index {idx} is out of range for {len(self)} objectives"
+                )
+        assert len(predictions) == len(indices_to_compute) and len(targets) == len(
+            indices_to_compute
+        ), (
+            "Predictions and targets must match the number of objectives to compute. "
+            f"Got {len(predictions)} predictions, {len(targets)} targets, and {len(indices_to_compute)} objectives to compute."
+        )
+
+        for idx in indices_to_compute:
+            objective = self[idx]
+            results.append(objective(predictions, targets))
+
+        return results
+
+    def __iter__(self) -> Iterator[BaseObjective]:
+        """Iterator over objectives."""
+        return super().__iter__()
+
+    def get_optimization_directions(self) -> List[OptimizationDirection]:
+        """Get optimization direction for each objective."""
+        return [obj.optimization_direction for obj in self]
+
+    def get_differentiable_objectives(self) -> List[BaseObjective]:
+        """Get list of differentiable objectives."""
+        return [obj for obj in self if obj.is_differentiable]
+
+    def get_non_differentiable_objectives(self) -> List[BaseObjective]:
+        """Get list of non-differentiable objectives."""
+        return [obj for obj in self if not obj.is_differentiable]
+
+    @property
+    def is_differentiable(self) -> bool:
+        """Whether all objectives are differentiable."""
+        return all(obj.is_differentiable for obj in self)
+
+    @property
+    def optimization_direction(self) -> OptimizationDirection:
+        return _get_overall_optimization_direction(
+            {obj.optimization_direction for obj in self}
+        )
