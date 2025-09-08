@@ -17,7 +17,14 @@ keywords = [
     "deep learning",
 ]
 requires-python = ">=3.10"
-dependencies = ["numpy", "torch"]
+dependencies = [
+    "numpy",
+    "torch",
+    "lightning>=2.0",
+    "torchmetrics",
+    "hydra-core",
+    "omegaconf",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -31,8 +38,9 @@ dev = [
 ]
 docs = ["sphinx>=4.0", "sphinx-rtd-theme", "numpydoc"]
 
-[tool.setuptools.packages.find]
-where = ["lit_learn"]
+[tool.setuptools]
+include-package-data = true
+package-dir = { "lit_learn" = "lit_learn" }
 
 [tool.isort]
 profile = "black"
