@@ -4,8 +4,16 @@ Train ResNet models on ImageNet using lit-learn's ERM (Empirical Risk Minimizati
 
 ## Usage
 
+Train a model:
+
 ```bash
 python train.py --data_root /path/to/imagenet
+```
+
+Test the trained model:
+
+```bash
+python test.py --data_root /path/to/imagenet --checkpoint_path /path/to/checkpoint.ckpt
 ```
 
 ## Baseline Configuration
