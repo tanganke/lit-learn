@@ -74,7 +74,7 @@ class ERM_LitModule(L.LightningModule):
             step_results = cast(MetricCollection, metrics)(predictions, targets)
             self.log_dict(
                 {f"{stage}/{k}": v for k, v in step_results.items()},
-                on_step=True,
+                on_step=(stage == "train"),
                 on_epoch=True,
                 sync_dist=True,
                 prog_bar=self.metrics_on_prog_bar,
