@@ -167,7 +167,7 @@ def main(args):
         optimizers={
             "optimizer": optimizer,
             "lr_scheduler": {
-                "lr_scheduler": lr_scheduler,
+                "scheduler": lr_scheduler,
                 "interval": "epoch",
                 "frequency": 1,
             },
@@ -177,6 +177,7 @@ def main(args):
             "acc@1": MulticlassAccuracy(num_classes=1000),
             "acc@5": MulticlassAccuracy(num_classes=1000, top_k=5),
         },
+        metrics_on_prog_bar=True,
     )
 
     # initialize dataloaders

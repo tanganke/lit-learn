@@ -27,11 +27,13 @@ class ERM_LitModule(L.LightningModule):
         optimizers: Optional[OptimizerLRScheduler] = None,
         objective: Optional[Union[Callable, "BaseObjective"]] = None,
         metrics: Optional[MetricCollection] = None,
+        metrics_on_prog_bar: bool = True,
     ):
         super().__init__()
         self.model = model
         self.objective = objective
         self.initial_optimizers = optimizers
+        self.metrics_on_prog_bar = metrics_on_prog_bar
 
         # Initialize metric collections
         if isinstance(metrics, dict):
@@ -44,8 +46,12 @@ class ERM_LitModule(L.LightningModule):
         test_metrics = (
             deepcopy(metrics) if metrics is not None else MetricCollection({})
         )
-        self.metrics = MetricCollection(
-            {"train": train_metrics, "val": val_metrics, "test": test_metrics}
+        self.metrics = nn.ModuleDict(
+            {
+                "train_metrics": train_metrics,
+                "val_metrics": val_metrics,
+                "test_metrics": test_metrics,
+            }
         )
 
     def configure_optimizers(self):
@@ -60,17 +66,18 @@ class ERM_LitModule(L.LightningModule):
         loss = self.objective(predictions, targets)
 
         # Log training loss
-        self.log(f"{stage}/loss", loss, prog_bar=True)
+        self.log(f"{stage}/loss", loss, prog_bar=True, sync_dist=True)
 
         # Compute and log training metrics
-        if len(self.metrics[stage]) > 0:
-            step_results = cast(MetricCollection, self.metrics[stage])(
-                predictions, targets
-            )
+        metrics = self.metrics[f"{stage}_metrics"]
+        if len(metrics) > 0:
+            step_results = cast(MetricCollection, metrics)(predictions, targets)
             self.log_dict(
                 {f"{stage}/{k}": v for k, v in step_results.items()},
                 on_step=False,
                 on_epoch=True,
+                sync_dist=True,
+                prog_bar=self.metrics_on_prog_bar,
             )
 
         step_results["loss"] = loss
