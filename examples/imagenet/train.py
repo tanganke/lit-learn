@@ -5,15 +5,13 @@ import lightning.pytorch.callbacks as pl_callbacks
 import torch
 from torch import nn
 from torch.optim import SGD, Adam
-from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from torch.utils.data import DataLoader
-from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics.classification import Accuracy
 from torchvision import transforms
 from torchvision.datasets import ImageNet
 from torchvision.models import resnet34, resnet50, resnet101, resnet152
 
 from lit_learn.lit_modules import ERM_LitModule
-
 
 MODEL_FACTORY = {
     "resnet34": lambda: resnet34(weights=None, num_classes=1000),
@@ -186,8 +184,8 @@ def main(args):
         },
         objective=nn.CrossEntropyLoss(label_smoothing=args.label_smoothing),
         metrics={
-            "acc@1": MulticlassAccuracy(num_classes=1000),
-            "acc@5": MulticlassAccuracy(num_classes=1000, top_k=5),
+            "acc@1": Accuracy(task="multiclass", num_classes=1000),
+            "acc@5": Accuracy(task="multiclass", num_classes=1000, top_k=5),
         },
         metrics_on_prog_bar=True,
     )

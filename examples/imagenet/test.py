@@ -2,7 +2,7 @@ import argparse
 
 import lightning as L
 from lightning_utilities.core.rank_zero import rank_zero_only
-from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics.classification import Accuracy
 from train import MODEL_FACTORY, get_dataloaders
 
 from lit_learn.lit_modules import ERM_LitModule
@@ -44,8 +44,8 @@ def main(args):
         checkpoint_path=args.checkpoint_path,
         model=model,
         metrics={
-            "acc@1": MulticlassAccuracy(num_classes=1000),
-            "acc@5": MulticlassAccuracy(num_classes=1000, top_k=5),
+            "acc@1": Accuracy(task="multiclass", num_classes=1000),
+            "acc@5": Accuracy(task="multiclass", num_classes=1000, top_k=5),
         },
     )
 
