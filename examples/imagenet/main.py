@@ -1,6 +1,7 @@
 import argparse
 
 import lightning as L
+import lightning.pytorch.callbacks as pl_callbacks
 import torch
 from torch import nn
 from torch.optim import SGD, Adam
@@ -192,6 +193,10 @@ def main(args):
         max_epochs=args.max_epochs,
         accelerator="auto",
         devices="auto",
+        callbacks=[
+            pl_callbacks.LearningRateMonitor(logging_interval="step"),
+            pl_callbacks.DeviceStatsMonitor(),
+        ],
     )
     trainer.fit(lit_module, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
