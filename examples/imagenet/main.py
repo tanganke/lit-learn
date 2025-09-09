@@ -152,6 +152,8 @@ def main(args):
         )
     elif args.optimizer == "adam":
         optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    else:
+        raise ValueError(f"Unknown optimizer: {args.optimizer}")
 
     if args.lr_scheduler == "step":
         lr_scheduler = torch.optim.lr_scheduler.StepLR(
@@ -161,6 +163,8 @@ def main(args):
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=args.max_epochs
         )
+    else:
+        raise ValueError(f"Unknown lr_scheduler: {args.lr_scheduler}")
 
     lit_module = ERM_LitModule(
         model,
