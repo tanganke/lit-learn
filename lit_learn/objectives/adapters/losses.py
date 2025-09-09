@@ -53,6 +53,14 @@ class LossAdapter(BaseObjective):
         else:
             raise ValueError("loss_fn must be a nn.Module class or callable function")
 
-    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        """Compute loss using the wrapped PyTorch loss function."""
-        return self.loss_fn(predictions, targets)
+    def forward(
+        self, predictions: torch.Tensor, targets: torch.Tensor = None
+    ) -> torch.Tensor:
+        """
+        Compute loss using the wrapped PyTorch loss function.
+        The targets can be None for losses that don't require them.
+        """
+        if targets is None:
+            return self.loss_fn(predictions)
+        else:
+            return self.loss_fn(predictions, targets)

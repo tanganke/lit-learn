@@ -9,6 +9,6 @@ from lit_learn.core.objective import (
     OptimizationDirection,
 )
 
-from .accuracy import MulticlassAccuracy
-from .losses import LossAdapter
+from .adapters import *
+from .classification import *
 from .multi_objective import WeightedSumObjective
