@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lit_learn.core.objective import BaseObjective
+from lit_learn.core.objective import BaseObjective, OptimizationDirection
 
 
 class LossAdapter(BaseObjective):
@@ -25,7 +25,7 @@ class LossAdapter(BaseObjective):
     def __init__(
         self,
         loss_fn: Union[nn.Module, callable],
-        minimize: bool = True,
+        optimization_direction: OptimizationDirection = OptimizationDirection.MINIMIZE,
         is_differentiable: bool = True,
         **loss_kwargs,
     ):
@@ -34,11 +34,14 @@ class LossAdapter(BaseObjective):
 
         Args:
             loss_fn: PyTorch loss function (nn.MSELoss, nn.CrossEntropyLoss, etc.)
-            minimize: Whether this objective should be minimized (default: True for losses)
+            optimization_direction: Optimization direction (default: MINIMIZE for losses)
             is_differentiable: Whether the objective is differentiable (default: True)
             **loss_kwargs: Additional arguments passed to loss function
         """
-        super().__init__(minimize=minimize, is_differentiable=is_differentiable)
+        super().__init__(
+            optimization_direction=optimization_direction,
+            is_differentiable=is_differentiable,
+        )
 
         # If it's a class, instantiate it with kwargs
         if isinstance(loss_fn, type) and issubclass(loss_fn, nn.Module):

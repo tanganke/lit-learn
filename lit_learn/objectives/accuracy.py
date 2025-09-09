@@ -6,7 +6,7 @@ from typing import Any
 
 import torch
 
-from lit_learn.core.objective import BaseObjective
+from lit_learn.core.objective import BaseObjective, OptimizationDirection
 
 
 class MulticlassAccuracy(BaseObjective):
@@ -18,7 +18,10 @@ class MulticlassAccuracy(BaseObjective):
     """
 
     def __init__(self):
-        super().__init__(minimize=False, is_differentiable=False)
+        super().__init__(
+            optimization_direction=OptimizationDirection.MAXIMIZE,
+            is_differentiable=False,
+        )
 
     def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> float:
         """

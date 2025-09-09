@@ -279,7 +279,7 @@ class ObjectiveList(nn.ModuleList):
 
         for idx in indices_to_compute:
             objective = self[idx]
-            results.append(objective(predictions, targets))
+            results.append(objective(predictions[idx], targets[idx]))
 
         return results
 
