@@ -1,6 +1,6 @@
-# lit-learn: A Toolkit for Multi-Task and Multi-Objective Optimization
+# lit-learn: A Toolkit for Deep Learning
 
-lit-learn is a Python toolkit designed for multi-task and multi-objective optimization built on **PyTorch Lightning** and **Lightning Fabric**. It provides a flexible and efficient framework for researchers and practitioners to tackle complex optimization problems across various domains.
+lit-learn is a Python toolkit designed for deep learning built on **PyTorch Lightning** and **Lightning Fabric**.
 
 ## 📦 Installation
 
