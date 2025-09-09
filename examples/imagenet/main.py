@@ -18,6 +18,9 @@ from lit_learn.lit_modules import ERM_LitModule
 def parse_args():
     parser = argparse.ArgumentParser(description="ImageNet Training with lit-learn")
     parser.add_argument(
+        "--seed", type=int, default=None, help="Random seed for reproducibility"
+    )
+    parser.add_argument(
         "--data_root", type=str, required=True, help="Path to ImageNet dataset"
     )
     parser.add_argument(
@@ -133,6 +136,9 @@ def get_dataloaders(args):
 
 
 def main(args):
+    if args.seed is not None:
+        L.seed_everything(args.seed)
+
     model_factory = {
         "resnet34": lambda: resnet34(weights=None, num_classes=1000),
         "resnet50": lambda: resnet50(weights=None, num_classes=1000),
