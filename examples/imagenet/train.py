@@ -10,14 +10,23 @@ from torchmetrics.classification import Accuracy
 from torchvision import transforms
 from torchvision.datasets import ImageNet
 from torchvision.models import resnet34, resnet50, resnet101, resnet152
+from transformers import AutoConfig, AutoFeatureExtractor, ViTForImageClassification
 
 from lit_learn.lit_modules import ERM_LitModule
+
+
+def create_deit_small():
+    config = AutoConfig.from_pretrained("facebook/deit-small-patch16-224")
+    model = ViTForImageClassification(config)
+    return model
+
 
 MODEL_FACTORY = {
     "resnet34": lambda: resnet34(weights=None, num_classes=1000),
     "resnet50": lambda: resnet50(weights=None, num_classes=1000),
     "resnet101": lambda: resnet101(weights=None, num_classes=1000),
     "resnet152": lambda: resnet152(weights=None, num_classes=1000),
+    "deit-small": create_deit_small,
 }
 
 
@@ -33,7 +42,7 @@ def parse_args():
         "--model",
         type=str,
         default="resnet50",
-        choices=["resnet34", "resnet50", "resnet101", "resnet152"],
+        choices=list(MODEL_FACTORY.keys()),
         help="Model architecture",
     )
     parser.add_argument(
@@ -91,34 +100,48 @@ def parse_args():
 
 
 def get_dataloaders(args):
-    to_tensor = transforms.ToTensor()
-    normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-    )
+    if args.model in ["resnet34", "resnet50", "resnet101", "resnet152"]:
+        print("Using ResNet data transforms.")
+        to_tensor = transforms.ToTensor()
+        normalize = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
 
-    train_dataset = ImageNet(
-        root=args.data_root,
-        split="train",
-        transform=transforms.Compose(
+        train_transform = transforms.Compose(
             [
                 transforms.RandomResizedCrop(224),
                 transforms.RandomHorizontalFlip(),
                 to_tensor,
                 normalize,
             ]
-        ),
-    )
-    val_dataset = ImageNet(
-        root=args.data_root,
-        split="val",
-        transform=transforms.Compose(
+        )
+        val_transform = transforms.Compose(
             [
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
                 to_tensor,
                 normalize,
             ]
-        ),
+        )
+    elif args.model in ["deit-small"]:
+        print("Using DeiT data transforms.")
+        feature_extractor = AutoFeatureExtractor.from_pretrained(
+            "facebook/deit-small-patch16-224"
+        )
+
+        train_transform = val_transform = lambda img: feature_extractor(
+            images=img, return_tensors="pt"
+        )["pixel_values"].squeeze()
+
+    train_dataset = ImageNet(
+        root=args.data_root,
+        split="train",
+        transform=train_transform,
+    )
+    val_dataset = ImageNet(
+        root=args.data_root,
+        split="val",
+        transform=val_transform,
     )
 
     train_loader = DataLoader(
@@ -147,6 +170,11 @@ def main(args):
 
     # initialize model
     model = MODEL_FACTORY[args.model]()
+    if args.model in ["deit-small"]:
+        original_forward = model.forward
+        model.forward = lambda pixel_values: original_forward(
+            pixel_values=pixel_values
+        ).logits
 
     # initialize optimizer and scheduler
     if args.optimizer == "sgd":
