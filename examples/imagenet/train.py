@@ -15,6 +15,14 @@ from torchvision.models import resnet34, resnet50, resnet101, resnet152
 from lit_learn.lit_modules import ERM_LitModule
 
 
+MODEL_FACTORY = {
+    "resnet34": lambda: resnet34(weights=None, num_classes=1000),
+    "resnet50": lambda: resnet50(weights=None, num_classes=1000),
+    "resnet101": lambda: resnet101(weights=None, num_classes=1000),
+    "resnet152": lambda: resnet152(weights=None, num_classes=1000),
+}
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="ImageNet Training with lit-learn")
     parser.add_argument(
@@ -139,15 +147,8 @@ def main(args):
     if args.seed is not None:
         L.seed_everything(args.seed)
 
-    model_factory = {
-        "resnet34": lambda: resnet34(weights=None, num_classes=1000),
-        "resnet50": lambda: resnet50(weights=None, num_classes=1000),
-        "resnet101": lambda: resnet101(weights=None, num_classes=1000),
-        "resnet152": lambda: resnet152(weights=None, num_classes=1000),
-    }
-
     # initialize model
-    model = model_factory[args.model]()
+    model = MODEL_FACTORY[args.model]()
 
     # initialize optimizer and scheduler
     if args.optimizer == "sgd":

@@ -63,10 +63,10 @@ class ERM_LitModule(L.LightningModule):
         predictions = self.model(inputs)
 
         # Compute objective (loss)
-        loss = self.objective(predictions, targets)
-
-        # Log training loss
-        self.log(f"{stage}/loss", loss, prog_bar=True, sync_dist=True)
+        if self.objective is not None:
+            loss = self.objective(predictions, targets)
+            # Log training loss
+            self.log(f"{stage}/loss", loss, prog_bar=True, sync_dist=True)
 
         # Compute and log training metrics
         metrics = self.metrics[f"{stage}_metrics"]
@@ -79,8 +79,11 @@ class ERM_LitModule(L.LightningModule):
                 sync_dist=True,
                 prog_bar=self.metrics_on_prog_bar,
             )
+        else:
+            step_results = {}
 
-        step_results["loss"] = loss
+        if self.objective is not None:
+            step_results["loss"] = loss
         return step_results
 
     def training_step(self, batch, batch_idx: int):

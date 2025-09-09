@@ -5,7 +5,7 @@ Train ResNet models on ImageNet using lit-learn's ERM (Empirical Risk Minimizati
 ## Usage
 
 ```bash
-python main.py --data_root /path/to/imagenet
+python train.py --data_root /path/to/imagenet
 ```
 
 ## Baseline Configuration
