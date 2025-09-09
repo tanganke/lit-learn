@@ -49,10 +49,8 @@ def main(args):
         },
     )
 
-    trainer = L.Trainer(logger=False)
-    test_results = trainer.test(lit_module, dataloaders=val_loader)
-    if rank_zero_only.rank == 0:
-        print(f"Test results: {test_results}")
+    trainer = L.Trainer(devices=1, num_nodes=1, logger=False)
+    trainer.test(lit_module, dataloaders=val_loader)
 
 
 if __name__ == "__main__":
