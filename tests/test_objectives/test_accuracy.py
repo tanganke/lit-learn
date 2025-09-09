@@ -7,7 +7,7 @@ import unittest
 import torch
 
 from lit_learn.core.objective import OptimizationDirection
-from lit_learn.objectives.accuracy import MulticlassAccuracy
+from lit_learn.objectives.classification.accuracy import MulticlassAccuracy
 
 
 class TestMulticlassAccuracy(unittest.TestCase):

@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from lit_learn.core.objective import OptimizationDirection
-from lit_learn.objectives.losses import LossAdapter
+from lit_learn.objectives.adapters.losses import LossAdapter
 
 
 class TestLossAdapter(unittest.TestCase):

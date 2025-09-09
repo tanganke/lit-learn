@@ -13,8 +13,8 @@ from lit_learn.core.objective import (
     ObjectiveList,
     OptimizationDirection,
 )
-from lit_learn.objectives.accuracy import MulticlassAccuracy
-from lit_learn.objectives.losses import LossAdapter
+from lit_learn.objectives.classification.accuracy import MulticlassAccuracy
+from lit_learn.objectives.adapters.losses import LossAdapter
 from lit_learn.objectives.multi_objective import WeightedSumObjective
 
 
