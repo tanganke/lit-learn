@@ -97,6 +97,50 @@ def _get_overall_optimization_direction(
     return OptimizationDirection.UNDEFINED
 
 
+def dominates(
+    objs_a: List[_ObjectiveOutput],
+    objs_b: List[_ObjectiveOutput],
+    directions: List[OptimizationDirection],
+    strict: bool = True,
+) -> bool:
+    """Check if solution A dominates solution B.
+
+    A dominates B if A is no worse in all objectives and better in at least one.
+
+    Args:
+        objs_a: Objective values for solution A
+        objs_b: Objective values for solution B
+        directions: Optimization directions for each objective
+        strict: If True, A must be strictly better in at least one objective
+
+    Returns:
+        True if A dominates B, False otherwise
+    """
+    assert (
+        len(objs_a) == len(objs_b) == len(directions)
+    ), "Length of objectives and directions must match"
+
+    better_in_at_least_one = False
+
+    for a, b, direction in zip(objs_a, objs_b, directions):
+        if direction == OptimizationDirection.MINIMIZE:
+            if a > b:
+                return False  # A is worse in this objective
+            elif a < b:
+                better_in_at_least_one = True
+        elif direction == OptimizationDirection.MAXIMIZE:
+            if a < b:
+                return False  # A is worse in this objective
+            elif a > b:
+                better_in_at_least_one = True
+        else:
+            raise ValueError(f"Unsupported optimization direction: {direction}")
+    if strict:
+        return better_in_at_least_one
+    else:
+        return True
+
+
 class ObjectiveDict(nn.ModuleDict):
     """
     A dictionary of objectives for multi-task learning and multi-objective optimization.
